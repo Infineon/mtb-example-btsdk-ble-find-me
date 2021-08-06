@@ -87,7 +87,9 @@ void app_user_interface_init(void)
 {
     /* Initialize the timers used for advertising state LED, and IAS alert
      * level LED */
+#ifndef SINGLE_LED
     wiced_init_timer(&adv_led_timer, adv_led_timer_cb, 0, WICED_MILLI_SECONDS_PERIODIC_TIMER);
+#endif
     wiced_init_timer(&ias_led_timer, ias_led_timer_cb, 0, WICED_MILLI_SECONDS_PERIODIC_TIMER);
 }
 
@@ -105,9 +107,12 @@ void app_user_interface_init(void)
 * Return:
 *   None
 *
+* Note:  only active for boards that support multiple LEDs
+*
 *******************************************************************************/
 void adv_led_update(void)
 {
+#ifndef SINGLE_LED
     /* Stop the advertising led timer */
     wiced_stop_timer(&adv_led_timer);
 
@@ -138,6 +143,7 @@ void adv_led_update(void)
             wiced_hal_gpio_set_pin_output(ADV_LED_GPIO, LED_OFF);
             break;
     }
+#endif
 }
 
 /*******************************************************************************

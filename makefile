@@ -95,6 +95,10 @@ endif
 CY_APP_DEFINES+=\
     -DWICED_BT_TRACE_ENABLE
 
+ifeq ($(TARGET),CYBT-213043-EVAL)
+CY_APP_DEFINES+=-DSINGLE_LED
+endif
+
 #
 # Components (middleware libraries)
 #
