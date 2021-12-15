@@ -32,7 +32,7 @@
  */
 
 /*******************************************************************************
-* File Name: app_bt_cfg.h
+* File Name: app_cfg.h
 * Version: 1.0
 *
 * Description:
@@ -43,9 +43,11 @@
 #ifndef APP_BT_CFG_H_
 #define APP_BT_CFG_H_
 
-#include "wiced_bt_cfg.h"
+#define app_bt_gatt_db_init(d, l) wiced_bt_gatt_db_init(d, l)
 
-extern const wiced_bt_cfg_settings_t wiced_bt_cfg_settings;
-extern const wiced_bt_cfg_buf_pool_t wiced_bt_cfg_buf_pools[WICED_BT_CFG_NUM_BUF_POOLS];
+/*****************************************************************************
+ * functions
+ *****************************************************************************/
+wiced_result_t app_stack_init();
 
 #endif /* APP_BT_CFG_H_ */

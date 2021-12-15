@@ -43,11 +43,9 @@
 /*******************************************************************************
 *        Header Files
 *******************************************************************************/
-#include "app_bt_event_handler.h"
-#include "app_bt_cfg.h"
-#include "sparcommon.h"
+#include "wiced_bt_dev.h"
+#include "app_cfg.h"
 #include "wiced_bt_trace.h"
-#include "wiced_bt_stack.h"
 
 /*******************************************************************************
 *        Macro Definitions
@@ -87,5 +85,5 @@ void application_start(void)
     WICED_BT_TRACE("**** Find Me Profile Application Start ****\n\r");
 
     /* Initialize Stack and Register Management Callback */
-    wiced_bt_stack_init(app_bt_management_callback, &wiced_bt_cfg_settings, wiced_bt_cfg_buf_pools);
+    app_stack_init();
 }

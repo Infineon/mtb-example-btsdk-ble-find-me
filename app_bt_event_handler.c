@@ -43,12 +43,13 @@
 /*******************************************************************************
 *        Header Files
 *******************************************************************************/
-#include "app_bt_event_handler.h"
 #include "app_user_interface.h"
-#include "GeneratedSource/cycfg_gatt_db.h"
 #include "wiced_bt_dev.h"
 #include "wiced_bt_trace.h"
-#include "wiced_bt_stack.h"
+#include "wiced_bt_ble.h"
+#include "app_bt_event_handler.h"
+#include "app_gatts.h"
+#include "app_cfg.h"
 
 /*******************************************************************************
 *        Variable Definitions
@@ -65,13 +66,6 @@ app_bt_adv_conn_mode_t app_bt_adv_conn_state = APP_BT_ADV_OFF_CONN_OFF;
 *******************************************************************************/
 static void                   ble_app_init               (void);
 static void                   ble_app_set_advertisement_data (void);
-
-/* GATT Event Callback Functions */
-static wiced_bt_gatt_status_t ble_app_write_handler          (wiced_bt_gatt_write_t *p_write_req, uint16_t conn_id);
-static wiced_bt_gatt_status_t ble_app_read_handler           (wiced_bt_gatt_read_t *p_read_req, uint16_t conn_id);
-static wiced_bt_gatt_status_t ble_app_connect_callback       (wiced_bt_gatt_connection_status_t *p_conn_status);
-static wiced_bt_gatt_status_t ble_app_server_callback        (uint16_t conn_id, wiced_bt_gatt_request_type_t type, wiced_bt_gatt_request_data_t *p_data);
-static wiced_bt_gatt_status_t ble_app_gatt_event_handler     (wiced_bt_gatt_evt_t  event, wiced_bt_gatt_event_data_t *p_event_data);
 
 /*******************************************************************************
 *        Function Definitions
@@ -190,55 +184,14 @@ static void ble_app_init(void)
     ble_app_set_advertisement_data();
 
     /* Register with BT stack to receive GATT callback */
-    wiced_bt_gatt_register(ble_app_gatt_event_handler);
+    wiced_bt_gatt_register(app_gatt_event_callback);
 
     /* Initialize GATT Database */
-    wiced_bt_gatt_db_init(gatt_database, gatt_database_len);
+    app_bt_gatt_db_init(gatt_database, gatt_database_len);
 
     /* Start Undirected LE Advertisements on device startup.
      * The corresponding parameters are contained in 'app_bt_cfg.c' */
     wiced_bt_start_advertisements(BTM_BLE_ADVERT_UNDIRECTED_HIGH, 0, NULL);
-}
-
-/**************************************************************************************************
-* Function Name: ble_app_gatt_event_handler()
-***************************************************************************************************
-* Summary:
-*   This function handles GATT events from the BT stack.
-*
-* Parameters:
-*   wiced_bt_gatt_evt_t event                   : BLE GATT event code of one byte length
-*   wiced_bt_gatt_event_data_t *p_event_data    : Pointer to BLE GATT event structures
-*
-* Return:
-*  wiced_bt_gatt_status_t: See possible status codes in wiced_bt_gatt_status_e in wiced_bt_gatt.h
-*
-**************************************************************************************************/
-static wiced_bt_gatt_status_t ble_app_gatt_event_handler(wiced_bt_gatt_evt_t event, wiced_bt_gatt_event_data_t *p_event_data)
-{
-    wiced_bt_gatt_status_t status = WICED_BT_GATT_ERROR;
-    wiced_bt_gatt_connection_status_t *p_conn_status = NULL;
-    wiced_bt_gatt_attribute_request_t *p_attr_req = NULL;
-
-    /* Call the appropriate callback function based on the GATT event type, and pass the relevant event
-     * parameters to the callback function */
-    switch ( event )
-    {
-        case GATT_CONNECTION_STATUS_EVT:
-            status = ble_app_connect_callback( &p_event_data->connection_status );
-            break;
-
-        case GATT_ATTRIBUTE_REQUEST_EVT:
-            p_attr_req = &p_event_data->attribute_request;
-            status = ble_app_server_callback( p_attr_req->conn_id, p_attr_req->request_type, &p_attr_req->data );
-            break;
-
-        default:
-            status = WICED_BT_GATT_SUCCESS;
-            break;
-    }
-
-    return status;
 }
 
 /**************************************************************************************************
@@ -284,86 +237,33 @@ static void ble_app_set_advertisement_data(void)
 }
 
 /**************************************************************************************************
-* Function Name: ble_app_get_value()
+* Function Name: app_get_attribute()
 ***************************************************************************************************
 * Summary:
-*   This function handles reading of the attribute value from the GATT database and passing the
-*   data to the BT stack. The value read from the GATT database is stored in a buffer whose
-*   starting address is passed as one of the function parameters
+*   This function returns attribute lookup pointer by given handle
 *
 * Parameters:
 *   uint16_t attr_handle                    : Attribute handle for read operation
-*   uint16_t conn_id                        : Connection ID
-*   uint8_t *p_val                          : Pointer to the buffer to store read data
-*   uint16_t max_len                        : Maximum buffer length available to store the read data
-*   uint16_t *p_len                         : Actual length of data copied to the buffer
 *
 * Return:
-*   wiced_bt_gatt_status_t: See possible status codes in wiced_bt_gatt_status_e in wiced_bt_gatt.h
+*   NULL if handle not found, otherwise, it returns pointer to the attribute lookup item
 *
 **************************************************************************************************/
-static wiced_bt_gatt_status_t ble_app_get_value(uint16_t attr_handle, uint16_t conn_id, uint8_t *p_val, uint16_t max_len, uint16_t *p_len)
+gatt_db_lookup_table_t * app_get_attribute(uint16_t handle)
 {
-    int i = 0;
-    wiced_bool_t isHandleInTable = WICED_FALSE;
-    wiced_bt_gatt_status_t res = WICED_BT_GATT_INVALID_HANDLE;
-
     /* Check for a matching handle entry */
-    for (i = 0; i < app_gatt_db_ext_attr_tbl_size; i++)
+    for (int i = 0; i < app_gatt_db_ext_attr_tbl_size; i++)
     {
-        if (app_gatt_db_ext_attr_tbl[i].handle == attr_handle)
+        if (app_gatt_db_ext_attr_tbl[i].handle == handle)
         {
-            /* Detected a matching handle in external lookup table */
-            isHandleInTable = WICED_TRUE;
-
-            /* Check if the buffer has space to store the data */
-            if (app_gatt_db_ext_attr_tbl[i].cur_len <= max_len)
-            {
-                /* Value fits within the supplied buffer; copy over the value */
-                *p_len = app_gatt_db_ext_attr_tbl[i].cur_len;
-                memcpy(p_val, app_gatt_db_ext_attr_tbl[i].p_data, app_gatt_db_ext_attr_tbl[i].cur_len);
-                res = WICED_BT_GATT_SUCCESS;
-
-                /* Add code for any action required when a particular attribute is read */
-                switch ( attr_handle )
-                {
-                    case HDLC_GAP_DEVICE_NAME_VALUE:
-                        break;
-                    case HDLC_GAP_APPEARANCE_VALUE:
-                        break;
-                }
-            }
-            else
-            {
-                /* Value to read will not fit within the buffer */
-                res = WICED_BT_GATT_INVALID_ATTR_LEN;
-            }
-            break;
+            return &app_gatt_db_ext_attr_tbl[i];
         }
     }
-
-    if (!isHandleInTable)
-    {
-        /* Add code to read value for handles not contained within generated lookup table.
-         * This is a custom logic that depends on the application, and is not used in the
-         * current application. If the value for the current handle is successfully read in the
-         * below code snippet, then set the result using:
-         * res = WICED_BT_GATT_SUCCESS; */
-        switch ( attr_handle )
-        {
-            default:
-                /* The read operation was not performed for the indicated handle */
-                WICED_BT_TRACE("Read Request to Invalid Handle: 0x%x\n\r", attr_handle);
-                res = WICED_BT_GATT_READ_NOT_PERMIT;
-                break;
-        }
-    }
-
-    return res;
+    return NULL;
 }
 
 /**************************************************************************************************
-* Function Name: ble_app_set_value()
+* Function Name: app_bt_write_handle_value()
 ***************************************************************************************************
 * Summary:
 *   This function handles writing to the attribute handle in the GATT database using the
@@ -371,133 +271,54 @@ static wiced_bt_gatt_status_t ble_app_get_value(uint16_t attr_handle, uint16_t c
 *   whose starting address is passed as one of the function parameters
 *
 * Parameters:
-*   uint16_t attr_handle                    : Attribute handle for write operation
-*   uint16_t conn_id                        : Connection ID
-*   uint8_t *p_val                          : Pointer to the buffer that stores the data to be written
-*   uint16_t len                            : Length of data to be written
+*   uint16_t handle                    : Attribute handle for write operation
+*   uint16_t offset                    : attribute offset to write
+*   uint8_t *buffer                    : Pointer to the buffer that stores the data to be written
+*   uint16_t len                       : Length of data to be written
 *
 * Return:
 *   wiced_bt_gatt_status_t: See possible status codes in wiced_bt_gatt_status_e in wiced_bt_gatt.h
 *
 **************************************************************************************************/
-static wiced_bt_gatt_status_t ble_app_set_value(uint16_t attr_handle, uint16_t conn_id, uint8_t *p_val, uint16_t len)
+wiced_bt_gatt_status_t app_bt_write_handle_value(uint16_t handle, uint16_t offset, uint8_t *p_val, uint16_t len)
 {
-    int i = 0;
-    wiced_bool_t isHandleInTable = WICED_FALSE;
-    wiced_bool_t validLen = WICED_FALSE;
+    gatt_db_lookup_table_t *p_attribute = app_get_attribute(handle);
     wiced_bt_gatt_status_t res = WICED_BT_GATT_INVALID_HANDLE;
 
-    /* Check for a matching handle entry */
-    for (i = 0; i < app_gatt_db_ext_attr_tbl_size; i++)
+    if (p_attribute != NULL)
     {
-        if (app_gatt_db_ext_attr_tbl[i].handle == attr_handle)
+        if (p_attribute->max_len - offset >= len)
         {
-            /* Detected a matching handle in external lookup table */
-            isHandleInTable = WICED_TRUE;
+            memcpy(p_attribute->p_data + offset, p_val, len);
+            res = WICED_BT_GATT_SUCCESS;
 
-            /* Check if the buffer has space to store the data */
-            validLen = (app_gatt_db_ext_attr_tbl[i].max_len >= len);
+            /* Add code for any action required when this attribute is written.
+             * In this case, we update the IAS led based on the IAS alert
+             * level characteristic value */
 
-            if (validLen)
+            switch ( handle )
             {
-                /* Value fits within the supplied buffer; copy over the value */
-                app_gatt_db_ext_attr_tbl[i].cur_len = len;
-                memcpy(app_gatt_db_ext_attr_tbl[i].p_data, p_val, len);
-                res = WICED_BT_GATT_SUCCESS;
-
-                /* Add code for any action required when this attribute is written.
-                 * In this case, we update the IAS led based on the IAS alert
-                 * level characteristic value */
-
-                switch ( attr_handle )
-                {
-                    case HDLC_IAS_ALERT_LEVEL_VALUE:
-                        WICED_BT_TRACE("Alert Level = %d\n\r", app_ias_alert_level[0]);
-                        ias_led_update();
-                        break;
-                }
+                case HDLC_IAS_ALERT_LEVEL_VALUE:
+                    WICED_BT_TRACE("Alert Level = %d\n\r", app_ias_alert_level[0]);
+                    ias_led_update();
+                    break;
             }
-            else
-            {
-                /* Value to write does not meet size constraints */
-                res = WICED_BT_GATT_INVALID_ATTR_LEN;
-            }
-            break;
+        }
+        else
+        {
+            /* Value to write does not meet size constraints */
+            res = WICED_BT_GATT_INVALID_ATTR_LEN;
         }
     }
-
-    if (!isHandleInTable)
+    else
     {
-        /* TODO: Add code to read value for handles not contained within generated lookup table.
-         * This is a custom logic that depends on the application, and is not used in the
-         * current application. If the value for the current handle is successfully written in the
-         * below code snippet, then set the result using:
-         * res = WICED_BT_GATT_SUCCESS; */
-        switch ( attr_handle )
-        {
-            default:
-                /* The write operation was not performed for the indicated handle */
-                WICED_BT_TRACE("Write Request to Invalid Handle: 0x%x\n\r", attr_handle);
-                res = WICED_BT_GATT_WRITE_NOT_PERMIT;
-                break;
-        }
+        WICED_BT_TRACE("Write Request to Invalid Handle: 0x%x\n\r", handle);
     }
-
     return res;
 }
 
 /**************************************************************************************************
-* Function Name: ble_app_write_handler()
-***************************************************************************************************
-* Summary:
-*   This function handles Write Requests received from the client device
-*
-* Parameters:
-*   wiced_bt_gatt_write_t *p_write_req          : Pointer that contains details of Write Request
-*                                                 including the attribute handle
-*   uint16_t conn_id                            : Connection ID
-*
-* Return:
-*  wiced_bt_gatt_status_t: See possible status codes in wiced_bt_gatt_status_e in wiced_bt_gatt.h
-*
-**************************************************************************************************/
-static wiced_bt_gatt_status_t ble_app_write_handler(wiced_bt_gatt_write_t *p_write_req, uint16_t conn_id)
-{
-    wiced_bt_gatt_status_t status = WICED_BT_GATT_INVALID_HANDLE;
-
-    /* Attempt to perform the Write Request */
-    status = ble_app_set_value(p_write_req->handle, conn_id, p_write_req->p_val, p_write_req->val_len);
-
-    return status;
-}
-
-/**************************************************************************************************
-* Function Name: ble_app_read_handler()
-***************************************************************************************************
-* Summary:
-*   This function handles Read Requests received from the client device
-*
-* Parameters:
-*   wiced_bt_gatt_write_t *p_read_req           : Pointer that contains details of Read Request
-*                                                 including the attribute handle
-*   uint16_t conn_id                            : Connection ID
-*
-* Return:
-*  wiced_bt_gatt_status_t: See possible status codes in wiced_bt_gatt_status_e in wiced_bt_gatt.h
-*
-**************************************************************************************************/
-static wiced_bt_gatt_status_t ble_app_read_handler( wiced_bt_gatt_read_t *p_read_req, uint16_t conn_id )
-{
-    wiced_bt_gatt_status_t status = WICED_BT_GATT_INVALID_HANDLE;
-
-    /* Attempt to perform the Read Request */
-    status = ble_app_get_value(p_read_req->handle, conn_id, p_read_req->p_val, *p_read_req->p_val_len, p_read_req->p_val_len);
-
-    return status;
-}
-
-/**************************************************************************************************
-* Function Name: ble_app_connect_callback()
+* Function Name: app_bt_event_connect()
 ***************************************************************************************************
 * Summary:
 *   This callback function handles connection status changes.
@@ -509,7 +330,7 @@ static wiced_bt_gatt_status_t ble_app_read_handler( wiced_bt_gatt_read_t *p_read
 *  wiced_bt_gatt_status_t: See possible status codes in wiced_bt_gatt_status_e in wiced_bt_gatt.h
 *
 **************************************************************************************************/
-static wiced_bt_gatt_status_t ble_app_connect_callback(wiced_bt_gatt_connection_status_t *p_conn_status)
+wiced_bt_gatt_status_t app_bt_event_connect(wiced_bt_gatt_connection_status_t *p_conn_status)
 {
     wiced_bt_gatt_status_t status = WICED_BT_GATT_ERROR;
 
@@ -553,38 +374,5 @@ static wiced_bt_gatt_status_t ble_app_connect_callback(wiced_bt_gatt_connection_
     return status;
 }
 
-/**************************************************************************************************
-* Function Name: ble_app_server_callback()
-***************************************************************************************************
-* Summary:
-*   This function handles GATT server events from the BT stack.
-*
-* Parameters:
-*   uint16_t conn_id                            : Connection ID
-*   wiced_bt_gatt_request_type_t type           : Type of GATT server event
-*   wiced_bt_gatt_request_data_t *p_data        : Pointer to GATT server event data
-*
-* Return:
-*  wiced_bt_gatt_status_t: See possible status codes in wiced_bt_gatt_status_e in wiced_bt_gatt.h
-*
-**************************************************************************************************/
-static wiced_bt_gatt_status_t ble_app_server_callback(uint16_t conn_id, wiced_bt_gatt_request_type_t type, wiced_bt_gatt_request_data_t *p_data)
-{
-    wiced_bt_gatt_status_t status = WICED_BT_GATT_ERROR;
-
-    switch ( type )
-    {
-        case GATTS_REQ_TYPE_READ:
-            /* Attribute read request */
-            status = ble_app_read_handler( &p_data->read_req, conn_id );
-            break;
-        case GATTS_REQ_TYPE_WRITE:
-            /* Attribute write request */
-            status = ble_app_write_handler( &p_data->write_req, conn_id );
-            break;
-    }
-
-    return status;
-}
 
 /* [] END OF FILE */

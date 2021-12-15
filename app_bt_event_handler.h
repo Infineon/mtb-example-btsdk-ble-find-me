@@ -47,6 +47,9 @@
 *        Header Files
 *******************************************************************************/
 #include "wiced_bt_dev.h"
+#include "wiced_bt_gatt.h"
+#include "cycfg_gatt_db.h"
+
 
 /*******************************************************************************
 *        Macro Definitions
@@ -72,5 +75,55 @@ extern app_bt_adv_conn_mode_t app_bt_adv_conn_state;
 *******************************************************************************/
 /* Callback function for Bluetooth stack management type events */
 wiced_bt_dev_status_t app_bt_management_callback(wiced_bt_management_evt_t event, wiced_bt_management_evt_data_t *p_event_data);
+
+/**************************************************************************************************
+* Function Name: app_bt_event_connect()
+***************************************************************************************************
+* Summary:
+*   This callback function handles connection status changes.
+*
+* Parameters:
+*   wiced_bt_gatt_connection_status_t *p_conn_status  : Pointer to data that has connection details
+*
+* Return:
+*  wiced_bt_gatt_status_t: See possible status codes in wiced_bt_gatt_status_e in wiced_bt_gatt.h
+*
+**************************************************************************************************/
+wiced_bt_gatt_status_t app_bt_event_connect       (wiced_bt_gatt_connection_status_t *p_conn_status);
+
+/**************************************************************************************************
+* Function Name: app_bt_write_handle_value()
+***************************************************************************************************
+* Summary:
+*   This function handles writing to the attribute handle in the GATT database using the
+*   data passed from the BT stack. The value to write is stored in a buffer
+*   whose starting address is passed as one of the function parameters
+*
+* Parameters:
+*   uint16_t handle                    : Attribute handle for write operation
+*   uint16_t offset                    : attribute offset to write
+*   uint8_t *buffer                    : Pointer to the buffer that stores the data to be written
+*   uint16_t len                       : Length of data to be written
+*
+* Return:
+*   wiced_bt_gatt_status_t: See possible status codes in wiced_bt_gatt_status_e in wiced_bt_gatt.h
+*
+**************************************************************************************************/
+wiced_bt_gatt_status_t app_bt_write_handle_value(uint16_t handle, uint16_t offset, uint8_t *buff, uint16_t len);
+
+/**************************************************************************************************
+* Function Name: app_get_attribute()
+***************************************************************************************************
+* Summary:
+*   This function returns attribute lookup pointer by given handle
+*
+* Parameters:
+*   uint16_t attr_handle                    : Attribute handle for read operation
+*
+* Return:
+*   NULL if handle not found, otherwise, it returns pointer to the attribute lookup item
+*
+**************************************************************************************************/
+gatt_db_lookup_table_t * app_get_attribute(uint16_t handle);
 
 #endif /* APP_BT_EVENT_HANDLER_H_ */

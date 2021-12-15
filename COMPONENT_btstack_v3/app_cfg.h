@@ -32,61 +32,23 @@
  */
 
 /*******************************************************************************
-* File Name: app_user_interface.h
+* File Name: app_cfg.h
 * Version: 1.0
 *
 * Description:
-*   Header file for application user interface (LEDs, Buttons) related
-*   functionality
+*   Header file for runtime Bluetooth stack configuration parameters
 *
 *******************************************************************************/
 
-#ifndef APP_USER_INTERFACE_H_
-#define APP_USER_INTERFACE_H_
+#ifndef APP_BT_CFG_H_
+#define APP_BT_CFG_H_
 
-/*******************************************************************************
-*        Header Files
-*******************************************************************************/
-#include "wiced_platform.h"
-#include "cycfg_pins.h"
+#define app_bt_gatt_db_init(d, l) wiced_bt_gatt_db_init(d, l, NULL)
 
-/*******************************************************************************
-*        Macro Definitions
-*******************************************************************************/
-/* LED pin assignments for advertising event and IAS alert levels */
-#ifdef CYW55572
- #define ADV_LED_GPIO                    26   // Need to updated with actual pin when Adv LED pin is defined in 55572 platform
- #define IAS_LED_GPIO                    26   // Need to updated with actual pin when IAS LED pin is defined in 55572 platform
-#else
- #define ADV_LED_GPIO                    WICED_GET_PIN_FOR_LED(WICED_PLATFORM_LED_1)
- #ifndef COMPONENT_CYW920721B2EVK_03_design_modus
-  #define IAS_LED_GPIO                    WICED_GET_PIN_FOR_LED(WICED_PLATFORM_LED_2)
- #else
-  /* the EVK-03 kit does not have LED2, use LED1 for both functions */
-  #define IAS_LED_GPIO                    WICED_GET_PIN_FOR_LED(WICED_PLATFORM_LED_1)
- #endif
-#endif
+/*****************************************************************************
+ * functions
+ *****************************************************************************/
+wiced_result_t app_stack_init();
 
-/* Update rate of LED's in milliseconds when blinking */
-#define ADV_LED_UPDATE_RATE_MS          250
-#define IAS_LED_UPDATE_RATE_MS          250
 
-/* LED's on the kit are active low */
-#define LED_ON                          0
-#define LED_OFF                         1
-
-/* IAS Alert Levels */
-#define IAS_ALERT_LEVEL_LOW             0u
-#define IAS_ALERT_LEVEL_MID             1u
-#define IAS_ALERT_LEVEL_HIGH            2u
-
-/*******************************************************************************
-*        Function Prototypes
-*******************************************************************************/
-void app_user_interface_init(void);
-void adv_led_update(void);
-void ias_led_update(void);
-
-#endif /* APP_USER_INTERFACE_H_ */
-
-/* [] END OF FILE */
+#endif /* APP_BT_CFG_H_ */

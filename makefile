@@ -56,9 +56,11 @@ SUPPORTED_TARGETS = \
   CYBT-273063-EVAL \
   CYBT-263065-EVAL \
   CYW989820EVB-01 \
+  CYW955572BTEVK-01 \
   CYW920721B2EVK-02 \
   CYW920719B2Q40EVB-01 \
-  CYW920721M2EVK-02
+  CYW920721M2EVK-02 \
+  CYW920721M2EVB-03
 
 #
 # Advanced Configuration
@@ -103,11 +105,6 @@ endif
 # Components (middleware libraries)
 #
 COMPONENTS +=bsp_design_modus
-ifeq ($(TARGET),CYW920721B2EVK-03)
-# use app specific design.modus
-DISABLE_COMPONENTS+=bsp_design_modus
-COMPONENTS+=CYW920721B2EVK-03_design_modus
-endif
 
 ################################################################################
 # Paths

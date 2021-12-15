@@ -32,7 +32,7 @@
  */
 
 /*******************************************************************************
-* File Name: app_bt_cfg.c
+* File Name: app_cfg.c
 * Version: 1.0
 *
 * Description:
@@ -40,11 +40,11 @@
 *
 *******************************************************************************/
 
-#include "app_bt_cfg.h"
-#include "wiced_bt_dev.h"
-#include "wiced_bt_ble.h"
-#include "wiced_bt_gatt.h"
-#include "cycfg_gatt_db.h"
+/* This file is applicable for all devices with BTSTACK version lower than 3.0, i.e. 20xxx and 43012C0 */
+
+#include "wiced_bt_cfg.h"
+#include "wiced_bt_stack.h"
+#include "app_bt_event_handler.h"
 
 /* TODO - Set your app settings as per use case */
 /*****************************************************************************
@@ -207,7 +207,7 @@ const wiced_bt_cfg_settings_t wiced_bt_cfg_settings =
  * Pools must be ordered in increasing buf_size.
  * If a pool runs out of buffers, the next  pool will be used
  *****************************************************************************/
-const wiced_bt_cfg_buf_pool_t wiced_bt_cfg_buf_pools[WICED_BT_CFG_NUM_BUF_POOLS] =
+const wiced_bt_cfg_buf_pool_t wiced_app_cfg_buf_pools[WICED_BT_CFG_NUM_BUF_POOLS] =
 {
 /*  { buf_size, buf_count } */
     { 64,       12  },      /* Small Buffer Pool */
@@ -215,3 +215,14 @@ const wiced_bt_cfg_buf_pool_t wiced_bt_cfg_buf_pools[WICED_BT_CFG_NUM_BUF_POOLS]
     { 1056,     6   },      /* Large Buffer Pool  (used for HCI ACL messages) */
     { 1056,     0   },      /* Extra Large Buffer Pool - Used for avdt media packets and miscellaneous (if not needed, set buf_count to 0) */
 };
+
+/*****************************************************************************
+ * app_stack_init
+ *
+ * Initialize system stack
+ *****************************************************************************/
+wiced_result_t app_stack_init()
+{
+    wiced_bt_stack_init(app_bt_management_callback, &wiced_bt_cfg_settings, wiced_app_cfg_buf_pools);
+    return WICED_BT_SUCCESS;
+}
