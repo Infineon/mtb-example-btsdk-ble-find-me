@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021, Cypress Semiconductor Corporation (an Infineon company) or
+ * Copyright 2016-2022, Cypress Semiconductor Corporation (an Infineon company) or
  * an affiliate of Cypress Semiconductor Corporation.  All rights reserved.
  *
  * This software, including source code, documentation and related
@@ -51,6 +51,10 @@
 #include "wiced_hal_gpio.h"
 #include "GeneratedSource/cycfg_gatt_db.h"
 
+#if defined (CYW55572A1)
+#define wiced_hal_gpio_get_pin_output(x) wiced_hal_gpio_get_pin_input_status(x)
+#endif
+
 /*******************************************************************************
 *        Variable Definitions
 *******************************************************************************/
@@ -61,8 +65,8 @@ static wiced_bool_t ias_timer_stopped_flag = WICED_TRUE;
 /*******************************************************************************
 *        Function Prototypes
 *******************************************************************************/
-static void ias_led_timer_cb(uint32_t arg);
-static void adv_led_timer_cb(uint32_t arg);
+static void ias_led_timer_cb(TIMER_PARAM_TYPE arg);
+static void adv_led_timer_cb(TIMER_PARAM_TYPE arg);
 
 /*******************************************************************************
 *        Function Definitions
@@ -218,7 +222,7 @@ void ias_led_update(void)
 *   None
 *
 *******************************************************************************/
-static void adv_led_timer_cb(uint32_t arg)
+static void adv_led_timer_cb(TIMER_PARAM_TYPE arg)
 {
     /* The timer stopped flag is checked to prevent any pending timer
      * callback from changing LED state after the timer is stopped */
@@ -250,7 +254,7 @@ static void adv_led_timer_cb(uint32_t arg)
 *   None
 *
 *******************************************************************************/
-static void ias_led_timer_cb(uint32_t arg)
+static void ias_led_timer_cb(TIMER_PARAM_TYPE arg)
 {
     /* The timer stopped flag is checked to prevent any pending timer
      * callback from changing LED state after the timer is stopped */

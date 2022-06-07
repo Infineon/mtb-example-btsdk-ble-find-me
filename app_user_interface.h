@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021, Cypress Semiconductor Corporation (an Infineon company) or
+ * Copyright 2016-2022, Cypress Semiconductor Corporation (an Infineon company) or
  * an affiliate of Cypress Semiconductor Corporation.  All rights reserved.
  *
  * This software, including source code, documentation and related
@@ -54,17 +54,12 @@
 *        Macro Definitions
 *******************************************************************************/
 /* LED pin assignments for advertising event and IAS alert levels */
-#ifdef CYW55572
- #define ADV_LED_GPIO                    26   // Need to updated with actual pin when Adv LED pin is defined in 55572 platform
- #define IAS_LED_GPIO                    26   // Need to updated with actual pin when IAS LED pin is defined in 55572 platform
+#define ADV_LED_GPIO                    WICED_GET_PIN_FOR_LED(WICED_PLATFORM_LED_1)
+#ifndef COMPONENT_CYW920721B2EVK_03_design_modus
+    #define IAS_LED_GPIO                    WICED_GET_PIN_FOR_LED(WICED_PLATFORM_LED_2)
 #else
- #define ADV_LED_GPIO                    WICED_GET_PIN_FOR_LED(WICED_PLATFORM_LED_1)
- #ifndef COMPONENT_CYW920721B2EVK_03_design_modus
-  #define IAS_LED_GPIO                    WICED_GET_PIN_FOR_LED(WICED_PLATFORM_LED_2)
- #else
-  /* the EVK-03 kit does not have LED2, use LED1 for both functions */
-  #define IAS_LED_GPIO                    WICED_GET_PIN_FOR_LED(WICED_PLATFORM_LED_1)
- #endif
+    /* the EVK-03 kit does not have LED2, use LED1 for both functions */
+    #define IAS_LED_GPIO                    WICED_GET_PIN_FOR_LED(WICED_PLATFORM_LED_1)
 #endif
 
 /* Update rate of LED's in milliseconds when blinking */
