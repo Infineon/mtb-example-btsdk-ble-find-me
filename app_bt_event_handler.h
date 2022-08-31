@@ -66,7 +66,7 @@ typedef enum
 /*******************************************************************************
 *        External Variable Declarations
 *******************************************************************************/
-/* State variable to track BLE advertising/connection state at the application
+/* State variable to track LE advertising/connection state at the application
  * level */
 extern app_bt_adv_conn_mode_t app_bt_adv_conn_state;
 

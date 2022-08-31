@@ -76,11 +76,11 @@ static void                   ble_app_set_advertisement_data (void);
 ***************************************************************************************************
 * Summary:
 *   This is a Bluetooth stack event handler function to receive management events from
-*   the BLE stack and process as per the application.
+*   the LE stack and process as per the application.
 *
 * Parameters:
-*   wiced_bt_management_evt_t event             : BLE event code of one byte length
-*   wiced_bt_management_evt_data_t *p_event_data: Pointer to BLE management event structures
+*   wiced_bt_management_evt_t event             : LE event code of one byte length
+*   wiced_bt_management_evt_data_t *p_event_data: Pointer to LE management event structures
 *
 * Return:
 *  wiced_result_t: Error code from WICED_RESULT_LIST or BT_RESULT_LIST
@@ -163,7 +163,7 @@ wiced_result_t app_bt_management_callback(wiced_bt_management_evt_t event, wiced
 ***************************************************************************************************
 * Summary:
 *   This function handles application level initialization tasks and is called from the BT
-*   management callback once the BLE stack enabled event (BTM_ENABLED_EVT) is triggered
+*   management callback once the LE stack enabled event (BTM_ENABLED_EVT) is triggered
 *
 * Parameters:
 *   None

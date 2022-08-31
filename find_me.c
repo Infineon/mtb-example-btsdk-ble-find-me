@@ -63,9 +63,9 @@
 * Function Name: application_start()
 ********************************************************************************
 * Summary: Entry point to the application. Initialize debug UART and register
-*   BLE management event callback. The actual application initialization will
-*   happen in BLE management event callback when the stack reports that
-*   BT device is ready
+*   LE management event callback. The actual application initialization will
+*   happen in LE management event callback when the stack reports that
+*   Bluetooth device is ready
 *
 * Parameters:
 *   None

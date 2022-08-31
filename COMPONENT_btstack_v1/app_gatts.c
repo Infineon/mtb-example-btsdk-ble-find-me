@@ -129,8 +129,8 @@ static wiced_bt_gatt_status_t app_gatt_req_event(uint16_t conn_id, wiced_bt_gatt
 *   This function handles GATT events from the BT stack.
 *
 * Parameters:
-*   wiced_bt_gatt_evt_t event                   : BLE GATT event code of one byte length
-*   wiced_bt_gatt_event_data_t *p_event_data    : Pointer to BLE GATT event structures
+*   wiced_bt_gatt_evt_t event                   : LE GATT event code of one byte length
+*   wiced_bt_gatt_event_data_t *p_event_data    : Pointer to LE GATT event structures
 *
 * Return:
 *  wiced_bt_gatt_status_t: See possible status codes in wiced_bt_gatt_status_e in wiced_bt_gatt.h

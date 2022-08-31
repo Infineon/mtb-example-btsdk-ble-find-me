@@ -102,7 +102,7 @@ void app_user_interface_init(void)
 ********************************************************************************
 *
 * Summary:
-*   This function updates the advertising LED state based on BLE advertising/
+*   This function updates the advertising LED state based on LE advertising/
 *   connection state
 *
 * Parameters:
@@ -124,7 +124,7 @@ void adv_led_update(void)
      * state */
     adv_timer_stopped_flag = WICED_TRUE;
 
-    /* Set LED state based on BLE advertising/connection state.
+    /* Set LED state based on LE advertising/connection state.
      * LED OFF for no advertisement/connection, LED blinking for advertisement
      * state, and LED ON for connected state  */
     switch(app_bt_adv_conn_state)
@@ -155,7 +155,7 @@ void adv_led_update(void)
 ********************************************************************************
 *
 * Summary:
-*   This function updates the IAS alert level LED state based on BLE
+*   This function updates the IAS alert level LED state based on LE
 *   advertising/connection state
 *
 * Parameters:
