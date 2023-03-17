@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022, Cypress Semiconductor Corporation (an Infineon company) or
+ * Copyright 2016-2023, Cypress Semiconductor Corporation (an Infineon company) or
  * an affiliate of Cypress Semiconductor Corporation.  All rights reserved.
  *
  * This software, including source code, documentation and related
@@ -50,10 +50,6 @@
 #include "wiced_platform.h"
 #include "wiced_hal_gpio.h"
 #include "GeneratedSource/cycfg_gatt_db.h"
-
-#if defined (CYW55572A1)
-#define wiced_hal_gpio_get_pin_output(x) wiced_hal_gpio_get_pin_input_status(x)
-#endif
 
 /*******************************************************************************
 *        Variable Definitions
